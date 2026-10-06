@@ -1,0 +1,8 @@
+{
+  "scalar_normalization_checked_targets": 5551,
+  "csv_raw_count_rows_checked": 88755,
+  "zero_baseline_targets": 9,
+  "default_review_count_checked": 1514,
+  "upstream_cli_L1_single_variants_checked": 60,
+  "upstream_commit": "9193bf679c2bab346d8c0f30a1f92e52c29c9bed"
+}

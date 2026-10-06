@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A reproducible, count-level filter-binding review workflow using Greenleaf Lab public Cas9 experiments and the author Casland model.">
+  <title>Exploratory Analyses Inspired by the Greenleaf Lab</title>
+  <link rel="stylesheet" href="styles.css?v=20261006">
+</head>
+<body>
+  <main class="page">
+    <h1>Exploratory Analyses Inspired by the Greenleaf Lab</h1>
+    <div class="byline">
+      Cathy Liu · Biotechnology &amp; quantitative research · <a href="mailto:cathyliu014@gmail.com">cathyliu014@gmail.com</a><br>
+      Prepared for the Greenleaf Lab, Stanford University<br>
+      Personal exploratory project, October 2026
+    </div>
+
+    <nav class="section-nav" aria-label="Demo sections">
+      <a href="#motivation">Motivation</a>
+      <a href="#a1">Assay review</a>
+      <a href="#a2">Challenge panel</a>
+      <a href="#relevance">Relevance</a>
+    </nav>
+
+    <p>The Greenleaf Lab turns sequence variation into quantitative measurements of molecular interactions. Massively parallel filter binding makes this especially tangible: thousands of DNA targets can be followed together as Cas9 binds them. Before interpreting an unusual target as interesting biology, how sensitive is its apparent binding to read support and the choice of normalization control?</p>
+    <p>I built a count-level review workflow for the lab’s public Cas9 experiment. It links each target’s time course to a transparent, adjustable review queue, then uses the authors’ sequence-energy model to assemble a small challenge panel for a future paired assay check. This is an exploratory QC proposal—not evidence of an equipment problem in the published experiment.</p>
+
+    <hr id="motivation">
+    <section aria-labelledby="how-heading">
+      <h2 id="how-heading">How it works</h2>
+      <p>The source is Boyle and colleagues’ 2021 filter-binding study. This view uses the 5 nM dCas9 association count tables: select a guide library, then its perfect target or a single-base mismatch. Binding is inferred from the loss of unbound target reads relative to the supplied control classes. Alternative normalizations stay visible, including values outside 0–1; the page does not fit kinetic rates or reproduce the paper’s full model-fitting pipeline.</p>
+      <p>Review criteria are deliberately descriptive. Low count support, control sensitivity or continued late change means “inspect or extend this measurement,” not “discard it.” The proposed paired validation below adds the timing, recovery and equipment records that these public data do not contain.</p>
+    </section>
+
+    <hr id="a1">
+    <section aria-labelledby="analysis-one-heading">
+      <h2 id="analysis-one-heading">Analysis 1 — What needs a second look?</h2>
+      <div class="experiment">
+        <div class="exp-label">Count-level reanalysis</div>
+        <div class="exp-title">Keep sequence effects separate from measurement fragility</div>
+        <p>Select a library and target. Tighten baseline read support or sensitivity tolerance to see which measurements enter the queue. The tolerance applies to the CM–KO difference, baseline leave-one-out spread, and change between the last two time points. These are analyst-chosen review criteria, not validated acceptance rules.</p>
+      </div>
+
+      <div class="panel">
+        <div class="control-block">
+          <label for="guide-select">Guide library</label>
+          <select id="guide-select"></select>
+          <label for="target-select">Target sequence</label>
+          <select id="target-select"></select>
+        </div>
+        <div class="chips" id="suggestions" aria-label="Suggested guide libraries"></div>
+        <p class="compact-note">A useful contrast: select <strong>Control-sensitive (S18)</strong> to inspect a perfect target with substantial baseline read support but a late estimate that changes with the control class.</p>
+        <p class="sequence-note" id="sequence-note"></p>
+        <svg id="hero-viz" class="viz" viewBox="0 0 600 330" role="img" aria-labelledby="hero-title hero-description"><title id="hero-title">Unclipped target association time course</title><desc id="hero-description">The measured time course will appear after selecting a guide library and target.</desc></svg>
+        <div class="chart-legend"><span><i class="line-primary"></i>Pooled CM + KO</span><span><i class="line-secondary"></i>CM only</span><span><i class="line-tertiary"></i>KO only</span></div>
+        <div class="readout" id="readout" aria-live="polite">Loading the published count-level data…</div>
+        <figcaption id="data-caption">Source: <a href="https://doi.org/10.6084/m9.figshare.12526157.v2">Boyle et al., Figshare, version 2</a>. Counts are sequencing reads, not biological replicates. Lines connect measurements; they are not kinetic fits.</figcaption>
+        <details class="raw-details"><summary>Inspect the selected target’s raw reads</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Raw target and normalization control reads"><table class="review-table"><thead><tr><th scope="col">Sample ID</th><th scope="col">Minutes</th><th scope="col">Target</th><th scope="col">CM</th><th scope="col">KO</th><th scope="col">Depleted</th></tr></thead><tbody id="raw-body"></tbody></table></div><p class="compact-note"><a href="data/drilldown_counts.csv.gz" download>Download all raw drilldown counts (CSV.gz)</a> · <a href="data/library_audit.csv" download>Library-level audit CSV</a></p></details>
+
+        <fieldset class="review-controls">
+          <legend>Change the review decision</legend>
+          <label for="read-floor">Minimum baseline reads
+            <select id="read-floor"><option value="30">30 reads</option><option value="100" selected>100 reads</option><option value="300">300 reads</option></select>
+          </label>
+          <label for="control-limit">Sensitivity / late-change tolerance
+            <select id="control-limit"><option value="0.10">10 percentage points</option><option value="0.15" selected>15 percentage points</option><option value="0.25">25 percentage points</option></select>
+          </label>
+        </fieldset>
+        <p class="compact-note" id="queue-summary" aria-live="polite"></p>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Target review queue, scroll horizontally if needed">
+          <table class="review-table"><thead><tr><th scope="col">Target</th><th scope="col">Baseline reads</th><th scope="col">CM–KO</th><th scope="col">Review reason</th></tr></thead><tbody id="queue-body"></tbody></table>
+        </div>
+        <div class="table-actions"><button class="text-button" type="button" id="show-all">Show all targets</button><button class="text-button" type="button" id="download-queue">Download review CSV</button></div>
+        <p class="utility-note"><strong>What this lets the lab do:</strong> prioritize count, control and time-coverage checks before spending a fresh assay on an apparent sequence outlier. The CSV preserves the thresholds and support behind each review decision.</p>
+        <p class="utility-note"><strong>Where Cathy adds value:</strong> a reproducible review structure informed by analytical-method optimization and validation experience—making the reason for a follow-up explicit rather than silently filtering difficult measurements.</p>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric"><span class="metric-val" id="metric-one">—</span><span class="metric-desc">baseline reads, selected target</span></div>
+        <div class="metric"><span class="metric-val" id="metric-two">—</span><span class="metric-desc">late fraction depleted / inferred binding</span></div>
+        <div class="metric"><span class="metric-val" id="metric-three">—</span><span class="metric-desc">targets in this library’s review queue</span></div>
+      </div>
+    </section>
+
+    <hr id="a2">
+    <section aria-labelledby="analysis-two-heading">
+      <h2 id="analysis-two-heading">Analysis 2 — Choose a useful challenge panel</h2>
+      <div class="experiment">
+        <div class="exp-label">Author-model context + proposed validation</div>
+        <div class="exp-title">Check robustness with matched sequences, not just one positive control</div>
+        <p>The Casland repository supplies sequence-dependent relative energy penalties. Each point below is a single mismatch from the selected library. Compare model penalty with observed late depletion, then inspect targets that test different parts of that range. This is a model-informed selection aid, not an independent validation of Casland.</p>
+      </div>
+      <svg id="model-viz" class="viz" viewBox="0 0 600 320" role="img" aria-labelledby="model-title model-description"><title id="model-title">Model energy penalty and observed depletion</title><desc id="model-description">Single-mismatch comparison for the selected guide library.</desc></svg>
+      <figcaption id="model-caption">Relative penalties come from the pinned <a href="https://github.com/augustboyle/Casland/tree/9193bf679c2bab346d8c0f30a1f92e52c29c9bed">Casland code and parameter set</a>. This is an energy-barrier model, not an absolute occupancy prediction.</figcaption>
+      <div id="challenge-panel" class="challenge-panel" aria-live="polite"></div>
+      <p class="utility-note"><strong>What this lets the lab do:</strong> select a compact sequence panel that spans predicted perturbation strength while retaining review-sensitive measurements as explicit diagnostic cases.</p>
+      <p class="utility-note"><strong>Where Cathy adds value:</strong> connect a sequence-level comparison to a practical validation record with controls, readouts and outcomes that change the next step. This does not demonstrate prior execution of filter-binding assays.</p>
+
+      <h3>Proposed paired check—not a diagnosed fault</h3>
+      <p>Run the selected panel with the perfect target and both published control classes before and after one recorded protocol or equipment change. Randomize well positions and repeat the pair on an independent day. Log protein preparation and active concentration, membrane lot, manifold position, elapsed collection time, input recovery and filtrate recovery. Change one factor at a time. <a href="run-log-template.csv" download>Download the blank paired-run log.</a></p>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Paired validation decision table"><table class="decision-table"><thead><tr><th scope="col">Discriminating observation</th><th scope="col">Next action</th></tr></thead><tbody>
+        <tr><td>Control recovery shifts with membrane, position or timing; target differences shrink after correction.</td><td>Investigate the measurement step and repeat the standard before interpreting a sequence effect.</td></tr>
+        <tr><td>Controls remain stable; the target contrast repeats across randomized positions and days.</td><td>Prioritize an orthogonal binding measurement before assigning a molecular mechanism.</td></tr>
+        <tr><td>The contrast depends on baseline depth or normalization, or is still changing at the final time points.</td><td>Increase count support, validate control suitability or extend time coverage, respectively.</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <hr id="relevance">
+    <section aria-labelledby="relevance-heading">
+      <h2 id="relevance-heading">Why this matters for the lab</h2>
+      <p>The advertised LSRP role pairs filter-binding experiments with maintenance and expansion of their equipment. The useful handoff here is a review list tied to actual reads and a paired-check plan, not a claim that an unusual curve identifies a hardware fault. The workflow could accept a new target-by-time count table with guide, control, concentration and sample annotations; fresh controls and prospective validation would be needed before treating it as an assay acceptance procedure.</p>
+
+      <h2>What I would bring</h2>
+      <p>My practical experience in analytical-method optimization, validation and careful experimental documentation sits alongside computational research in biological systems. I would bring that habit of tracing an interpretation back to its measurement, recording uncertainties, and planning the next discriminating check. I would need training in the lab’s filter-binding technique and equipment. This assistant-supported exploratory analysis is not evidence that I have already performed those experiments or independently developed the software.</p>
+
+      <h2>Methods note</h2>
+      <p class="methods-note">The source is <a href="https://doi.org/10.6084/m9.figshare.12526157.v2">Figshare 12526157, version 2</a>, accompanying <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7895440/">Boyle et al., Science Advances (2021)</a>. This is a processed-count reanalysis, not FASTQ reprocessing. The interactive subset contains perfect and single-mismatch targets from the 5 nM association experiment; it does not analyze cleavage, every mismatch class or every concentration. The source’s 91 libraries include a repeated guide, rather than 91 independent guide identities.</p>
+      <p class="methods-note" id="normalization-note"></p>
+      <p class="methods-note">Control differences, baseline sensitivity and late-time change are descriptive diagnostics, not confidence intervals or proof of a failed assay. Continued late change may be genuine kinetics. There are no matched maintenance records, and sequencing counts are not biological replicates. Casland parameters derive from this experimental programme; comparison against these data is not a held-out performance test. No clinical guide recommendation is made.</p>
+      <p class="methods-note">Reproduce the transformations, inspect formulas, data checks and software attribution in the <a href="https://github.com/liuzhitong330/greenleaf-lab-demo">public source repository</a>. Author-model version: <a href="https://github.com/augustboyle/Casland/tree/9193bf679c2bab346d8c0f30a1f92e52c29c9bed"><code>9193bf6</code></a>. Review thresholds are exploratory choices, requiring assay-specific validation.</p>
+    </section>
+
+    <footer>Cathy Liu · <a href="mailto:cathyliu014@gmail.com">cathyliu014@gmail.com</a> · <a href="tel:+14152163799">415-216-3799</a><br>Personal research demonstration · Not affiliated with or endorsed by the Greenleaf Lab</footer>
+  </main>
+  <script src="data.js?v=20261006"></script>
+  <script src="app.js?v=20261006"></script>
+</body>
+</html>

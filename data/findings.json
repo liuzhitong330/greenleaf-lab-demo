@@ -1,0 +1,10 @@
+{
+  "libraries": 91,
+  "drilldown_targets": 5551,
+  "raw_count_measurements": 88755,
+  "all_non_normalizer_targets": 54167,
+  "all_review_100_015": 17458,
+  "drilldown_review_100_015": 1514,
+  "drilldown_review_30_030": 380,
+  "drilldown_review_300_010": 2847
+}
